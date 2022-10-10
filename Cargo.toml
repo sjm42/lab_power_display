@@ -13,6 +13,7 @@ bench = false
 [dependencies]
 ads1x1x = "0.2"
 embedded-hal = "0.2"
+max7219 = "0.3"
 nb = "1.0"
 panic-halt = "0.2"
 ufmt = "0.2"
