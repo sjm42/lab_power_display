@@ -1,0 +1,37 @@
+[package]
+name = "lab_power_display"
+version = "0.1.0"
+authors = ["Sami J. Mäkinen <sjm@iki.fi>"]
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+[[bin]]
+name = "lab_power_display"
+test = false
+bench = false
+
+[dependencies]
+ads1x1x = "0.2"
+embedded-hal = "0.2"
+nb = "1.0"
+panic-halt = "0.2"
+ufmt = "0.2"
+
+[dependencies.arduino-hal]
+git = "https://github.com/rahix/avr-hal"
+# rev = "1aacefb335517f85d0de858231e11055d9768cdf"
+features = ["arduino-nano"]
+
+# Configure the build for minimal size - AVRs have very little program memory
+[profile.dev]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "s"
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+debug = true
+lto = true
+opt-level = "s"
