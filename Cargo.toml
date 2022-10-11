@@ -1,6 +1,6 @@
 [package]
 name = "lab_power_display"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Sami J. Mäkinen <sjm@iki.fi>"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
@@ -11,9 +11,9 @@ test = false
 bench = false
 
 [features]
-default = ["calibrate"]
-# default = ["production"]
-calibrate = []
+# default = ["calibration"]
+default = ["production"]
+calibration = []
 production = []
 
 [dependencies]
