@@ -14,20 +14,13 @@ use nb::block;
 fn main() -> ! {
     let dp = arduino_hal::Peripherals::take().unwrap();
     let mut watchdog = wdt::Wdt::new(dp.WDT, &dp.CPU.mcusr);
+    watchdog.start(wdt::Timeout::Ms2000).unwrap();
+
     let pins = arduino_hal::pins!(dp);
-
     let mut serial = arduino_hal::default_serial!(dp, pins, 57600);
+    ufmt::uwrite!(&mut serial, "Lab power display\r\n").ok();
 
-    let i2c = arduino_hal::I2c::new(
-        dp.TWI,
-        pins.a4.into_pull_up_input(),
-        pins.a5.into_pull_up_input(),
-        50000,
-    );
-    let adc_addr = SlaveAddr::default();
-    let mut adc = Ads1x1x::new_ads1015(i2c, adc_addr);
-    adc.disable_comparator().unwrap();
-
+    // *** Initialize SPI and MAX7219
     // SPI pins:
     // CS/SS = d10 (dumy, not used - we actually use d9 for MAX7219)
     // MOSI = d11
@@ -53,8 +46,21 @@ fn main() -> ! {
     disp.set_intensity(0, 1).unwrap();
     disp.clear_display(0).unwrap();
 
-    ufmt::uwrite!(&mut serial, "Lab power display\r\n").ok();
-    watchdog.start(wdt::Timeout::Ms2000).unwrap();
+    ufmt::uwrite!(&mut serial, "SPI and MAX7219 init done.\r\n").ok();
+
+    // *** Initializa i2c and ADS1115
+
+    let i2c = arduino_hal::I2c::new(
+        dp.TWI,
+        pins.a4.into_pull_up_input(),
+        pins.a5.into_pull_up_input(),
+        50000,
+    );
+    let adc_addr = SlaveAddr::default();
+    let mut adc = Ads1x1x::new_ads1115(i2c, adc_addr);
+    adc.disable_comparator().unwrap();
+
+    ufmt::uwrite!(&mut serial, "I2C and ADS1115 init done.\r\n").ok();
 
     let mut buf: [u8; 8] = [b' '; 8];
     loop {
@@ -86,7 +92,7 @@ fn main() -> ! {
 
         #[cfg(feature = "calibrate")]
         {
-            ufmt::uwrite!(&mut serial, "ADC amps: {}\r\n\r\n", volt).ok();
+            ufmt::uwrite!(&mut serial, "ADC volt: {}\r\n\r\n", volt).ok();
 
             buf[0] = b'U';
             i16_disp(volt, &mut buf);
