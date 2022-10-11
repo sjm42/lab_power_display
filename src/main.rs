@@ -3,18 +3,17 @@
 
 use ads1x1x::{channel, Ads1x1x, FullScaleRange, SlaveAddr};
 use arduino_hal::{hal::wdt, prelude::*, spi};
+use core::ops::*;
 use embedded_hal::spi::MODE_0;
 use max7219::*;
 use nb::block;
 use panic_halt as _;
 
-#[cfg(feature = "production")]
-use core::ops::*;
+const N_AVG: i32 = 16;
 
 // ************************************************
 // Our calibration data, based on real measurements
 
-#[cfg(feature = "production")]
 const CAL_V: [(i16, f32); 9] = [
     (3, 0.000),
     (1132, 1.490),
@@ -27,7 +26,6 @@ const CAL_V: [(i16, f32); 9] = [
     (27422, 34.900),
 ];
 
-#[cfg(feature = "production")]
 const CAL_I: [(i16, f32); 9] = [
     (469, 0.0982),
     (889, 0.1983),
@@ -40,7 +38,6 @@ const CAL_I: [(i16, f32); 9] = [
     (15300, 3.4992),
 ];
 
-#[cfg(feature = "production")]
 const OFF_I: [(f32, i16); 9] = [
     (0.0, 40),
     (2.0, 57),
@@ -56,18 +53,18 @@ const OFF_I: [(f32, i16); 9] = [
 // *** end of calibration data
 // ***************************
 
-#[cfg(feature = "calibration")]
-const N_AVG: i32 = 128;
-#[cfg(feature = "production")]
-const N_AVG: i32 = 8;
-
 #[arduino_hal::entry]
 fn main() -> ! {
     let dp = arduino_hal::Peripherals::take().unwrap();
     let mut watchdog = wdt::Wdt::new(dp.WDT, &dp.CPU.mcusr);
     watchdog.start(wdt::Timeout::Ms2000).unwrap();
 
+    // NOTE: calibration mode is triggered with jumper in d4+d5
     let pins = arduino_hal::pins!(dp);
+    let d4 = pins.d4.into_pull_up_input();
+    let mut d5 = pins.d5.into_output();
+    d5.set_low();
+
     let mut serial = arduino_hal::default_serial!(dp, pins, 57600);
     ufmt::uwrite!(&mut serial, "Lab power display\r\n").ok();
 
@@ -94,7 +91,7 @@ fn main() -> ! {
     );
     let mut disp = MAX7219::from_spi_cs(1, spi, pins.d9.into_output()).unwrap();
     disp.power_on().unwrap();
-    disp.set_intensity(0, 1).unwrap();
+    disp.set_intensity(0, 8).unwrap();
     disp.clear_display(0).unwrap();
 
     ufmt::uwrite!(&mut serial, "SPI and MAX7219 init done.\r\n").ok();
@@ -113,6 +110,10 @@ fn main() -> ! {
 
     ufmt::uwrite!(&mut serial, "I2C and ADS1115 init done.\r\n").ok();
 
+    // Check if the jumper is present
+    let calibration = d4.is_low();
+    let production = !calibration;
+
     let mut buf: [u8; 8] = [b' '; 8];
     loop {
         // use gain 16 for input 0-1 (current)
@@ -122,13 +123,11 @@ fn main() -> ! {
         let mut sum: i32 = 0;
         for _ in 0..N_AVG {
             sum += block!(adc.read(&mut channel::DifferentialA0A1)).unwrap() as i32;
-            // watchdog.feed();
         }
         watchdog.feed();
         let adc_amps = (sum / N_AVG) as i16;
 
-        #[cfg(feature = "calibration")]
-        {
+        if calibration {
             // ufmt::uwrite!(&mut serial, "ADC amps: {}\r\n", amps).ok();
 
             buf[0] = b'A';
@@ -140,6 +139,8 @@ fn main() -> ! {
                 })
                 .ok();
             */
+            arduino_hal::delay_ms(1000);
+            watchdog.feed();
         }
 
         // use gain 1 for input 2-3 (voltage)
@@ -148,13 +149,11 @@ fn main() -> ! {
         sum = 0;
         for _ in 0..N_AVG {
             sum += block!(adc.read(&mut channel::DifferentialA2A3)).unwrap() as i32;
-            // watchdog.feed();
         }
         watchdog.feed();
         let adc_volt = (sum / N_AVG) as i16;
 
-        #[cfg(feature = "calibration")]
-        {
+        if calibration {
             // ufmt::uwrite!(&mut serial, "ADC volt: {}\r\n\r\n", volt).ok();
 
             buf[0] = b'U';
@@ -166,10 +165,11 @@ fn main() -> ! {
                 })
                 .ok();
             */
+            arduino_hal::delay_ms(1000);
+            watchdog.feed();
         }
 
-        #[cfg(feature = "production")]
-        {
+        if production {
             let volt_f = interpolate_f(adc_volt, &CAL_V);
             let amp_off = interpolate_i(volt_f, &OFF_I);
             let amps_f = interpolate_f(adc_amps - amp_off, &CAL_I);
@@ -179,7 +179,6 @@ fn main() -> ! {
     }
 }
 
-#[cfg(feature = "calibration")]
 fn i16_disp(val: i16, buf: &mut [u8]) {
     if buf.len() < 8 {
         return;
@@ -193,8 +192,6 @@ fn i16_disp(val: i16, buf: &mut [u8]) {
     buf[7] = b'0' + (uval % 10) as u8;
 }
 
-#[allow(dead_code)]
-#[cfg(feature = "production")]
 fn volt_amps_disp(volt: f32, amps: f32, buf: &mut [u8]) {
     if buf.len() < 8 {
         return;
@@ -212,7 +209,6 @@ fn volt_amps_disp(volt: f32, amps: f32, buf: &mut [u8]) {
     buf[7] = b'0' + (amps_u % 10) as u8;
 }
 
-#[cfg(feature = "production")]
 fn interpolate_i(x: f32, calibr: &[(f32, i16)]) -> i16 {
     for i in 0..calibr.len() {
         let x_floor = calibr[i].0;
@@ -229,7 +225,6 @@ fn interpolate_i(x: f32, calibr: &[(f32, i16)]) -> i16 {
 }
 
 // here we have some trait & generics porn
-#[cfg(feature = "production")]
 fn interpolate_f<N1, N2>(x: N1, calibr: &[(N1, N2)]) -> N2
 where
     N1: Copy + Add<Output = N1> + Sub<Output = N1> + Ord + Into<N2>,

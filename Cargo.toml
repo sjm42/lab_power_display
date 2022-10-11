@@ -10,12 +10,6 @@ name = "lab_power_display"
 test = false
 bench = false
 
-[features]
-# default = ["calibration"]
-default = ["production"]
-calibration = []
-production = []
-
 [dependencies]
 ads1x1x = "0.2"
 embedded-hal = "0.2"
