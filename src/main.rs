@@ -226,7 +226,6 @@ fn volt_amps_disp(volt: f32, amps: f32, buf: &mut [u8]) {
     buf[7] = b'0' + (amps_u % 10) as u8;
 }
 
-// here we have some traits & generics porn
 fn interpolate_f(_p: &mut impl uWrite, mut x: i16, calibr: &[(i16, f32)]) -> f32 {
     x = if x < 0 { 0 } else { x };
     // ufmt::uwrite!(p, "x: {}\r\n", x).ok();
