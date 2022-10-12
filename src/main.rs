@@ -1,53 +1,50 @@
+// lab_power_display - main.rs
+
 #![no_std]
 #![no_main]
 
 use ads1x1x::{channel, Ads1x1x, FullScaleRange, SlaveAddr};
 use arduino_hal::{hal::wdt, prelude::*, spi};
-use core::ops::*;
 use embedded_hal::spi::MODE_0;
 use max7219::*;
 use nb::block;
+use ufmt::uWrite;
+
 use panic_halt as _;
 
-const N_AVG: i32 = 16;
+const N_AVG: i32 = 42;
 
 // ************************************************
 // Our calibration data, based on real measurements
 
-const CAL_V: [(i16, f32); 9] = [
-    (3, 0.000),
-    (1132, 1.490),
-    (4322, 5.570),
-    (8061, 10.370),
-    (12863, 16.450),
-    (17448, 22.300),
-    (22028, 28.100),
-    (24725, 31.500),
-    (27422, 34.900),
+const AMP_OFF: i16 = 70;
+
+const CAL_V: [(i16, f32); 13] = [
+    (0, 0.000),
+    (773, 1.082),
+    (1452, 2.020),
+    (2543, 3.523),
+    (3624, 5.012),
+    (6516, 9.017),
+    (8717, 12.050),
+    (10897, 15.030),
+    (14508, 20.000),
+    (18186, 25.080),
+    (21790, 30.030),
+    (22585, 31.120),
+    (24175, 33.360),
 ];
 
 const CAL_I: [(i16, f32); 9] = [
-    (469, 0.0982),
-    (889, 0.1983),
-    (2152, 0.4985),
-    (4264, 0.9982),
-    (6404, 1.4987),
-    (8561, 1.9989),
-    (10780, 2.4994),
-    (13040, 2.9993),
-    (15300, 3.4992),
-];
-
-const OFF_I: [(f32, i16); 9] = [
-    (0.0, 40),
-    (2.0, 57),
-    (5.0, 66),
-    (10.0, 80),
-    (15.0, 93),
-    (20.0, 103),
-    (25.0, 114),
-    (31.0, 130),
-    (37.0, 146),
+    (0, 0.0),
+    (544, 0.100),
+    (2160, 0.500),
+    (4195, 1.000),
+    (6448, 1.500),
+    (8376, 2.000),
+    (10834, 2.500),
+    (12990, 3.000),
+    (15150, 3.500),
 ];
 
 // *** end of calibration data
@@ -56,14 +53,14 @@ const OFF_I: [(f32, i16); 9] = [
 #[arduino_hal::entry]
 fn main() -> ! {
     let dp = arduino_hal::Peripherals::take().unwrap();
+    let pins = arduino_hal::pins!(dp);
     let mut watchdog = wdt::Wdt::new(dp.WDT, &dp.CPU.mcusr);
     watchdog.start(wdt::Timeout::Ms2000).unwrap();
 
-    // NOTE: calibration mode is triggered with jumper in d4+d5
-    let pins = arduino_hal::pins!(dp);
+    // NOTE: calibration mode is triggered with jumper in d3+d4
+    pins.d3.into_output().set_low();
     let d4 = pins.d4.into_pull_up_input();
-    let mut d5 = pins.d5.into_output();
-    d5.set_low();
+    // leave it to settle for a short time while we do other stuff...
 
     let mut serial = arduino_hal::default_serial!(dp, pins, 57600);
     ufmt::uwrite!(&mut serial, "Lab power display\r\n").ok();
@@ -119,17 +116,17 @@ fn main() -> ! {
         // use gain 16 for input 0-1 (current)
         adc.set_full_scale_range(FullScaleRange::Within0_256V)
             .unwrap();
-
+        arduino_hal::delay_ms(5);
         let mut sum: i32 = 0;
         for _ in 0..N_AVG {
             sum += block!(adc.read(&mut channel::DifferentialA0A1)).unwrap() as i32;
+            arduino_hal::delay_ms(1);
         }
         watchdog.feed();
         let adc_amps = (sum / N_AVG) as i16;
 
         if calibration {
-            // ufmt::uwrite!(&mut serial, "ADC amps: {}\r\n", amps).ok();
-
+            ufmt::uwrite!(&mut serial, "ADC amps: {}\r\n", adc_amps).ok();
             buf[0] = b'A';
             i16_disp(adc_amps, &mut buf);
             disp.write_str(0, &buf, 0b00000000).unwrap();
@@ -146,16 +143,17 @@ fn main() -> ! {
         // use gain 1 for input 2-3 (voltage)
         adc.set_full_scale_range(FullScaleRange::Within4_096V)
             .unwrap();
+        arduino_hal::delay_ms(5);
         sum = 0;
         for _ in 0..N_AVG {
             sum += block!(adc.read(&mut channel::DifferentialA2A3)).unwrap() as i32;
+            arduino_hal::delay_ms(1);
         }
         watchdog.feed();
         let adc_volt = (sum / N_AVG) as i16;
 
         if calibration {
-            // ufmt::uwrite!(&mut serial, "ADC volt: {}\r\n\r\n", volt).ok();
-
+            ufmt::uwrite!(&mut serial, "ADC volt: {}\r\n\r\n", adc_volt).ok();
             buf[0] = b'U';
             i16_disp(adc_volt, &mut buf);
             disp.write_str(0, &buf, 0b00000000).unwrap();
@@ -170,9 +168,28 @@ fn main() -> ! {
         }
 
         if production {
-            let volt_f = interpolate_f(adc_volt, &CAL_V);
-            let amp_off = interpolate_i(volt_f, &OFF_I);
-            let amps_f = interpolate_f(adc_amps - amp_off, &CAL_I);
+            // ufmt::uwrite!(&mut serial, "*** volt interpolate()\r\n").ok();
+            let volt_f = interpolate_f(&mut serial, adc_volt, &CAL_V);
+            /*
+            ufmt::uwrite!(
+                &mut serial,
+                "volt_f(*1000): {}\r\n",
+                (volt_f * 1000.0) as i32
+            )
+            .ok();
+            */
+
+            // ufmt::uwrite!(&mut serial, "*** amps interpolate()\r\n").ok();
+            let amps_f = interpolate_f(&mut serial, adc_amps - AMP_OFF, &CAL_I);
+            /*
+            ufmt::uwrite!(
+                &mut serial,
+                "amps_f(*1000): {}\r\n",
+                (amps_f * 1000.0) as i32
+            )
+            .ok();
+            */
+
             volt_amps_disp(volt_f, amps_f, &mut buf);
             disp.write_str(0, &buf, 0b01000100).unwrap();
         }
@@ -209,39 +226,27 @@ fn volt_amps_disp(volt: f32, amps: f32, buf: &mut [u8]) {
     buf[7] = b'0' + (amps_u % 10) as u8;
 }
 
-fn interpolate_i(x: f32, calibr: &[(f32, i16)]) -> i16 {
+// here we have some traits & generics porn
+fn interpolate_f(_p: &mut impl uWrite, mut x: i16, calibr: &[(i16, f32)]) -> f32 {
+    x = if x < 0 { 0 } else { x };
+    // ufmt::uwrite!(p, "x: {}\r\n", x).ok();
     for i in 0..calibr.len() {
-        let x_floor = calibr[i].0;
-        if x > x_floor {
-            let f_floor = calibr[i].1;
-            let step_x = calibr[i + 1].0 - x_floor;
-            let step_f = calibr[i + 1].1 - f_floor;
-            let delta_x = x - x_floor;
+        if x < calibr[i].0 {
+            let floor_x = calibr[i - 1].0;
+            // ufmt::uwrite!(p, "floor_x: {}\r\n", floor_x).ok();
+            let floor_f = calibr[i - 1].1;
+            // ufmt::uwrite!(p, "floor_f(*1000): {}\r\n", (floor_f * 1000.0) as i32).ok();
+            let step_x = calibr[i].0 - floor_x;
+            // ufmt::uwrite!(p, "step_x: {}\r\n", step_x).ok();
+            let step_f = calibr[i].1 - floor_f;
+            // ufmt::uwrite!(p, "step_f(*1000): {}\r\n", (step_f * 1000.0) as i32).ok();
+            let delta_x = x - floor_x;
+            // ufmt::uwrite!(p, "delta_x: {}\r\n", delta_x).ok();
 
-            return f_floor + ((((delta_x / step_x) * step_f as f32) + 0.5) as i16);
+            return floor_f + (delta_x as f32 / step_x as f32) * step_f;
         }
     }
-    0
-}
-
-// here we have some trait & generics porn
-fn interpolate_f<N1, N2>(x: N1, calibr: &[(N1, N2)]) -> N2
-where
-    N1: Copy + Add<Output = N1> + Sub<Output = N1> + Ord + Into<N2>,
-    N2: Copy + Default + Add<Output = N2> + Sub<Output = N2> + Div<Output = N2> + Mul<Output = N2>,
-{
-    for i in 0..calibr.len() {
-        let x_floor = calibr[i].0;
-        if x > x_floor {
-            let f_floor = calibr[i].1;
-            let step_x = calibr[i + 1].0 - x_floor;
-            let step_f = calibr[i + 1].1 - f_floor;
-            let delta_x = x - x_floor;
-
-            return f_floor + (delta_x.into() / step_x.into()) * step_f;
-        }
-    }
-    N2::default()
+    0.0
 }
 
 // EOF

@@ -1,3 +1,5 @@
+# lab_power_display - Cargo.toml
+
 [package]
 name = "lab_power_display"
 version = "0.1.2"
@@ -20,19 +22,21 @@ ufmt = "0.2"
 
 [dependencies.arduino-hal]
 git = "https://github.com/rahix/avr-hal"
-# rev = "1aacefb335517f85d0de858231e11055d9768cdf"
 features = ["arduino-nano"]
 
 # Configure the build for minimal size - AVRs have very little program memory
 [profile.dev]
 panic = "abort"
 codegen-units = 1
+debug = false
 lto = true
 opt-level = "s"
 
 [profile.release]
 panic = "abort"
 codegen-units = 1
-debug = true
+debug = false
 lto = true
 opt-level = "s"
+
+# EOF
