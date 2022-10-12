@@ -65,6 +65,9 @@ fn main() -> ! {
     let mut serial = arduino_hal::default_serial!(dp, pins, 57600);
     ufmt::uwrite!(&mut serial, "Lab power display\r\n").ok();
 
+    // Display buffer for our 8 digit 7seg
+    let mut buf: [u8; 8] = [b'-'; 8];
+
     // *** Initialize SPI and MAX7219
     // SPI pins:
     // CS/SS = d10 (dumy, not used - we actually use d9 for MAX7219)
@@ -88,8 +91,9 @@ fn main() -> ! {
     );
     let mut disp = MAX7219::from_spi_cs(1, spi, pins.d9.into_output()).unwrap();
     disp.power_on().unwrap();
-    disp.set_intensity(0, 8).unwrap();
+    disp.set_intensity(0, 1).unwrap();
     disp.clear_display(0).unwrap();
+    disp.write_str(0, &buf, 0b11111111).unwrap();
 
     ufmt::uwrite!(&mut serial, "SPI and MAX7219 init done.\r\n").ok();
 
@@ -111,7 +115,6 @@ fn main() -> ! {
     let calibration = d4.is_low();
     let production = !calibration;
 
-    let mut buf: [u8; 8] = [b' '; 8];
     loop {
         // use gain 16 for input 0-1 (current)
         adc.set_full_scale_range(FullScaleRange::Within0_256V)
@@ -129,6 +132,7 @@ fn main() -> ! {
             ufmt::uwrite!(&mut serial, "ADC amps: {}\r\n", adc_amps).ok();
             buf[0] = b'A';
             i16_disp(adc_amps, &mut buf);
+            disp.set_intensity(0, 8).unwrap();
             disp.write_str(0, &buf, 0b00000000).unwrap();
             /*
                 ufmt::uwrite!(&mut serial, "{}\r\n", unsafe {
@@ -156,6 +160,7 @@ fn main() -> ! {
             ufmt::uwrite!(&mut serial, "ADC volt: {}\r\n\r\n", adc_volt).ok();
             buf[0] = b'U';
             i16_disp(adc_volt, &mut buf);
+            disp.set_intensity(0, 8).unwrap();
             disp.write_str(0, &buf, 0b00000000).unwrap();
             /*
                 ufmt::uwrite!(&mut serial, "{}\r\n", unsafe {
@@ -191,6 +196,7 @@ fn main() -> ! {
             */
 
             volt_amps_disp(volt_f, amps_f, &mut buf);
+            disp.set_intensity(0, 8).unwrap();
             disp.write_str(0, &buf, 0b01000100).unwrap();
         }
     }
