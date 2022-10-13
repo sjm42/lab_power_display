@@ -111,7 +111,7 @@ fn main() -> ! {
 
     ufmt::uwrite!(&mut serial, "I2C and ADS1115 init done.\r\n").ok();
 
-    // Check if the jumper is present
+    // Check if the d3+d4 jumper is present
     let calibration = d4.is_low();
     let production = !calibration;
 
@@ -173,7 +173,6 @@ fn main() -> ! {
         }
 
         if production {
-            // ufmt::uwrite!(&mut serial, "*** volt interpolate()\r\n").ok();
             let volt_f = interpolate_f(&mut serial, adc_volt, &CAL_V);
             /*
             ufmt::uwrite!(
@@ -184,7 +183,6 @@ fn main() -> ! {
             .ok();
             */
 
-            // ufmt::uwrite!(&mut serial, "*** amps interpolate()\r\n").ok();
             let amps_f = interpolate_f(&mut serial, adc_amps - AMP_OFF, &CAL_I);
             /*
             ufmt::uwrite!(
@@ -234,7 +232,7 @@ fn volt_amps_disp(volt: f32, amps: f32, buf: &mut [u8]) {
 
 fn interpolate_f(_p: &mut impl uWrite, mut x: i16, calibr: &[(i16, f32)]) -> f32 {
     x = if x < 0 { 0 } else { x };
-    // ufmt::uwrite!(p, "x: {}\r\n", x).ok();
+    // ufmt::uwrite!(p, "*** interpolate() x: {}\r\n", x).ok();
     for i in 0..calibr.len() {
         if x < calibr[i].0 {
             let floor_x = calibr[i - 1].0;
