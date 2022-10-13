@@ -12,7 +12,7 @@ use ufmt::uWrite;
 
 use panic_halt as _;
 
-const N_AVG: i32 = 42;
+const N_AVG: i32 = 16;
 
 // ************************************************
 // Our calibration data, based on real measurements
