@@ -15,7 +15,7 @@ dependencies = [
 [[package]]
 name = "arduino-hal"
 version = "0.1.0"
-source = "git+https://github.com/rahix/avr-hal#b73f17e2b6d35c669003a1e346d5d396753a1922"
+source = "git+https://github.com/rahix/avr-hal#1ab563c8c9af4ee4d20ef7dacaa945aa3ae4dddc"
 dependencies = [
  "atmega-hal",
  "avr-device",
@@ -29,7 +29,7 @@ dependencies = [
 [[package]]
 name = "atmega-hal"
 version = "0.1.0"
-source = "git+https://github.com/rahix/avr-hal#b73f17e2b6d35c669003a1e346d5d396753a1922"
+source = "git+https://github.com/rahix/avr-hal#1ab563c8c9af4ee4d20ef7dacaa945aa3ae4dddc"
 dependencies = [
  "avr-device",
  "avr-hal-generic",
@@ -61,7 +61,7 @@ dependencies = [
 [[package]]
 name = "avr-hal-generic"
 version = "0.1.0"
-source = "git+https://github.com/rahix/avr-hal#b73f17e2b6d35c669003a1e346d5d396753a1922"
+source = "git+https://github.com/rahix/avr-hal#1ab563c8c9af4ee4d20ef7dacaa945aa3ae4dddc"
 dependencies = [
  "avr-device",
  "cfg-if 0.1.10",
