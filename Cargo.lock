@@ -15,7 +15,7 @@ dependencies = [
 [[package]]
 name = "arduino-hal"
 version = "0.1.0"
-source = "git+https://github.com/rahix/avr-hal#1ab563c8c9af4ee4d20ef7dacaa945aa3ae4dddc"
+source = "git+https://github.com/rahix/avr-hal#4c9c44c314eb061ee20556ef10d45dea36e75ee4"
 dependencies = [
  "atmega-hal",
  "avr-device",
@@ -29,7 +29,7 @@ dependencies = [
 [[package]]
 name = "atmega-hal"
 version = "0.1.0"
-source = "git+https://github.com/rahix/avr-hal#1ab563c8c9af4ee4d20ef7dacaa945aa3ae4dddc"
+source = "git+https://github.com/rahix/avr-hal#4c9c44c314eb061ee20556ef10d45dea36e75ee4"
 dependencies = [
  "avr-device",
  "avr-hal-generic",
@@ -37,21 +37,21 @@ dependencies = [
 
 [[package]]
 name = "avr-device"
-version = "0.4.0"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5ed053e039e53fc32535af3db89e285f83a2a984854ca904ded202d588f7f0e2"
+checksum = "deb45711b7227cb3f799c40c4e0e8beea1765acff8d06a14bb3479c1a549d8b0"
 dependencies = [
  "avr-device-macros",
  "bare-metal",
- "cfg-if 0.1.10",
+ "cfg-if 1.0.0",
  "vcell",
 ]
 
 [[package]]
 name = "avr-device-macros"
-version = "0.4.0"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dae1e4e9408de79dace22e251b27b65fa1525df0b067e6b9c604924693f7fd21"
+checksum = "87c428a2384981d8460668c48c766ff18e7e91d2d467f7b103151984ee952d38"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -61,7 +61,7 @@ dependencies = [
 [[package]]
 name = "avr-hal-generic"
 version = "0.1.0"
-source = "git+https://github.com/rahix/avr-hal#1ab563c8c9af4ee4d20ef7dacaa945aa3ae4dddc"
+source = "git+https://github.com/rahix/avr-hal#4c9c44c314eb061ee20556ef10d45dea36e75ee4"
 dependencies = [
  "avr-device",
  "cfg-if 0.1.10",
