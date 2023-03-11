@@ -2,7 +2,7 @@
 
 [package]
 name = "lab_power_display"
-version = "0.1.3"
+version = "0.1.4"
 authors = ["Sami J. Mäkinen <sjm@iki.fi>"]
 edition = "2021"
 resolver = "2"
@@ -19,7 +19,7 @@ bench = false
 ads1x1x = "0.2"
 embedded-hal = "0.2"
 max7219 = "0.3"
-nb = "1.0"
+nb = "1.1"
 panic-halt = "0.2"
 ufmt = "0.2"
 
