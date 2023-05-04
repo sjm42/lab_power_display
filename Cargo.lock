@@ -110,7 +110,7 @@ checksum = "723dce4e9f25b6e6c5f35628e144794e5b459216ed7da97b7c4b66cdb3fa82ca"
 
 [[package]]
 name = "lab_power_display"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "ads1x1x",
  "arduino-hal",
@@ -123,9 +123,9 @@ dependencies = [
 
 [[package]]
 name = "max7219"
-version = "0.3.1"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7c17404dbd28d501f88ec9f440b06a2a753fe4a24749e3277603f3f17049b112"
+checksum = "b5e6abd59177985bc46fa25bb7b3d6deb0090107d876a5e67a518ef6d69d3429"
 dependencies = [
  "embedded-hal",
 ]
