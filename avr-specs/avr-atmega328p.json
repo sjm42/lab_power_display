@@ -11,16 +11,21 @@
       "-lgcc"
     ]
   },
-  "linker": "avr-gcc",
+  "linker": "/home/sjm/avr-gcc/bin/avr-gcc",
   "linker-is-gnu": true,
+  "linker-flavor": "gcc",
   "llvm-target": "avr-unknown-unknown",
   "max-atomic-width": 8,
   "no-default-libraries": false,
   "pre-link-args": {
     "gcc": [
+      "-Os",
       "-mmcu=atmega328p",
       "-Wl,--as-needed"
     ]
+  },
+  "post-link-args": {
+    "gcc": ["-L", "/usr/lib/avr/lib/avr5"]
   },
   "target-c-int-width": "16",
   "target-pointer-width": "16"
