@@ -11,7 +11,7 @@
       "-lgcc"
     ]
   },
-  "linker": "/home/sjm/avr-gcc/bin/avr-gcc",
+  "linker": "avr-gcc",
   "linker-is-gnu": true,
   "linker-flavor": "gcc",
   "llvm-target": "avr-unknown-unknown",
@@ -21,7 +21,8 @@
     "gcc": [
       "-Os",
       "-mmcu=atmega328p",
-      "-Wl,--as-needed"
+      "-Wl,--as-needed",
+      "-L", "/usr/lib/avr/lib/avr5"
     ]
   },
   "post-link-args": {
