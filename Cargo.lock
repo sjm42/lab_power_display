@@ -123,9 +123,9 @@ dependencies = [
 
 [[package]]
 name = "max7219"
-version = "0.4.0"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b5e6abd59177985bc46fa25bb7b3d6deb0090107d876a5e67a518ef6d69d3429"
+checksum = "96ad36f14b96e5e196c3cf1028eba57c8cf4e6045b1d4b68951d23c422400d1c"
 dependencies = [
  "embedded-hal",
 ]
