@@ -22,7 +22,7 @@ dependencies = [
  "avr-hal-generic",
  "cfg-if 1.0.0",
  "embedded-hal 0.2.7",
- "embedded-hal 1.0.0-rc.3",
+ "embedded-hal 1.0.0",
  "ufmt",
  "void",
 ]
@@ -67,7 +67,7 @@ dependencies = [
  "avr-device",
  "cfg-if 0.1.10",
  "embedded-hal 0.2.7",
- "embedded-hal 1.0.0-rc.3",
+ "embedded-hal 1.0.0",
  "embedded-storage",
  "nb 1.1.0",
  "paste",
@@ -106,9 +106,9 @@ dependencies = [
 
 [[package]]
 name = "embedded-hal"
-version = "1.0.0-rc.3"
+version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc402f79e1fd22731ca945b4f97b5ff37e7b3f379312595c42bb2e8811c29920"
+checksum = "361a90feb7004eca4019fb28352a9465666b24f840f5c3cddf0ff13920590b89"
 
 [[package]]
 name = "embedded-storage"
