@@ -15,7 +15,7 @@ dependencies = [
 [[package]]
 name = "arduino-hal"
 version = "0.1.0"
-source = "git+https://github.com/rahix/avr-hal#92c32eb0176b131ec10640e4cf651011e6d83aa9"
+source = "git+https://github.com/rahix/avr-hal#ab3e4625fcbc0aa2dbdb1cb92596406f1da16cd8"
 dependencies = [
  "atmega-hal",
  "avr-device",
@@ -24,13 +24,12 @@ dependencies = [
  "embedded-hal 0.2.7",
  "embedded-hal 1.0.0",
  "ufmt",
- "void",
 ]
 
 [[package]]
 name = "atmega-hal"
 version = "0.1.0"
-source = "git+https://github.com/rahix/avr-hal#92c32eb0176b131ec10640e4cf651011e6d83aa9"
+source = "git+https://github.com/rahix/avr-hal#ab3e4625fcbc0aa2dbdb1cb92596406f1da16cd8"
 dependencies = [
  "avr-device",
  "avr-hal-generic",
@@ -62,7 +61,7 @@ dependencies = [
 [[package]]
 name = "avr-hal-generic"
 version = "0.1.0"
-source = "git+https://github.com/rahix/avr-hal#92c32eb0176b131ec10640e4cf651011e6d83aa9"
+source = "git+https://github.com/rahix/avr-hal#ab3e4625fcbc0aa2dbdb1cb92596406f1da16cd8"
 dependencies = [
  "avr-device",
  "cfg-if 0.1.10",
@@ -73,7 +72,7 @@ dependencies = [
  "paste",
  "rustversion",
  "ufmt",
- "void",
+ "unwrap-infallible",
 ]
 
 [[package]]
@@ -232,6 +231,12 @@ name = "unicode-ident"
 version = "1.0.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3354b9ac3fae1ff6755cb6db53683adb661634f67557942dea4facebec0fee4b"
+
+[[package]]
+name = "unwrap-infallible"
+version = "0.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "151ac09978d3c2862c4e39b557f4eceee2cc72150bc4cb4f16abf061b6e381fb"
 
 [[package]]
 name = "vcell"
