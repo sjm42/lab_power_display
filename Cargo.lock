@@ -15,7 +15,7 @@ dependencies = [
 [[package]]
 name = "arduino-hal"
 version = "0.1.0"
-source = "git+https://github.com/rahix/avr-hal#e2c54331f7eed0d48fb0b5b9ae01fd0054a3759f"
+source = "git+https://github.com/rahix/avr-hal#d5f1472a2ea19c84a2edab418ada479314fe5ae7"
 dependencies = [
  "atmega-hal",
  "avr-device",
@@ -29,7 +29,7 @@ dependencies = [
 [[package]]
 name = "atmega-hal"
 version = "0.1.0"
-source = "git+https://github.com/rahix/avr-hal#e2c54331f7eed0d48fb0b5b9ae01fd0054a3759f"
+source = "git+https://github.com/rahix/avr-hal#d5f1472a2ea19c84a2edab418ada479314fe5ae7"
 dependencies = [
  "avr-device",
  "avr-hal-generic",
@@ -61,7 +61,7 @@ dependencies = [
 [[package]]
 name = "avr-hal-generic"
 version = "0.1.0"
-source = "git+https://github.com/rahix/avr-hal#e2c54331f7eed0d48fb0b5b9ae01fd0054a3759f"
+source = "git+https://github.com/rahix/avr-hal#d5f1472a2ea19c84a2edab418ada479314fe5ae7"
 dependencies = [
  "avr-device",
  "cfg-if 0.1.10",
@@ -192,9 +192,9 @@ dependencies = [
 
 [[package]]
 name = "quote"
-version = "1.0.35"
+version = "1.0.36"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "291ec9ab5efd934aaf503a6466c5d5251535d108ee747472c3977cc5acc868ef"
+checksum = "0fa76aaf39101c457836aec0ce2316dbdc3ab723cdda1c6bd4e6ad4208acaca7"
 dependencies = [
  "proc-macro2",
 ]
