@@ -3,16 +3,19 @@
 #![no_std]
 #![no_main]
 
+#[allow(clippy::single_component_path_imports)]
+#[allow(unused_imports)]
+use panic_halt;
+
 use ads1x1x::{channel, Ads1x1x, FullScaleRange, SlaveAddr};
 use arduino_hal::{hal::wdt, prelude::*, spi};
-use embedded_hal::spi::MODE_0;
+use embedded_hal::spi as espi;
 use max7219::*;
 use nb::block;
 use ufmt::uWrite;
 
-use panic_halt as _;
-
 const N_AVG: i32 = 16;
+
 
 // ************************************************
 // Our calibration data, based on real measurements
@@ -50,6 +53,7 @@ const CAL_I: [(i16, f32); 9] = [
 // *** end of calibration data
 // ***************************
 
+
 #[arduino_hal::entry]
 fn main() -> ! {
     let dp = arduino_hal::Peripherals::take().unwrap();
@@ -70,25 +74,25 @@ fn main() -> ! {
 
     // *** Initialize SPI and MAX7219
     // SPI pins:
-    // CS/SS = d10 (dumy, not used - we actually use d9 for MAX7219)
+    // CS/SS = d10 (dummy, not used - we actually use d9 for MAX7219)
     // MOSI = d11
     // MISO = d12
     // SCLK = d13
 
-    let spi_c = spi::Settings {
+    let spi_config = spi::Settings {
         data_order: spi::DataOrder::MostSignificantFirst,
         clock: spi::SerialClockRate::OscfOver2,
-        mode: MODE_0,
+        mode: espi::MODE_0,
     };
-
     let (spi, _) = arduino_hal::Spi::new(
         dp.SPI,
         pins.d13.into_output(),
         pins.d11.into_output(),
         pins.d12.into_pull_up_input(),
         pins.d10.into_output(),
-        spi_c,
+        spi_config,
     );
+
     let mut disp = MAX7219::from_spi_cs(1, spi, pins.d9.into_output()).unwrap();
     disp.power_on().unwrap();
     disp.set_intensity(0, 1).unwrap();
@@ -134,12 +138,13 @@ fn main() -> ! {
             i16_disp(adc_amps, &mut buf);
             disp.set_intensity(0, 8).unwrap();
             disp.write_str(0, &buf, 0b00000000).unwrap();
-            /*
-                ufmt::uwrite!(&mut serial, "{}\r\n", unsafe {
+
+            #[cfg(feature = "debug")]
+            ufmt::uwrite!(&mut serial, "{}\r\n", unsafe {
                     core::str::from_utf8_unchecked(&buf)
                 })
                 .ok();
-            */
+
             arduino_hal::delay_ms(1000);
             watchdog.feed();
         }
@@ -162,36 +167,37 @@ fn main() -> ! {
             i16_disp(adc_volt, &mut buf);
             disp.set_intensity(0, 8).unwrap();
             disp.write_str(0, &buf, 0b00000000).unwrap();
-            /*
-                ufmt::uwrite!(&mut serial, "{}\r\n", unsafe {
+
+            #[cfg(feature = "debug")]
+            ufmt::uwrite!(&mut serial, "{}\r\n", unsafe {
                     core::str::from_utf8_unchecked(&buf)
                 })
                 .ok();
-            */
+
             arduino_hal::delay_ms(1000);
             watchdog.feed();
         }
 
         if production {
             let volt_f = interpolate_f(&mut serial, adc_volt, &CAL_V);
-            /*
+
+            #[cfg(feature = "debug")]
             ufmt::uwrite!(
                 &mut serial,
                 "volt_f(*1000): {}\r\n",
                 (volt_f * 1000.0) as i32
             )
-            .ok();
-            */
+                .ok();
 
             let amps_f = interpolate_f(&mut serial, adc_amps - AMP_OFF, &CAL_I);
-            /*
+
+            #[cfg(feature = "debug")]
             ufmt::uwrite!(
                 &mut serial,
                 "amps_f(*1000): {}\r\n",
                 (amps_f * 1000.0) as i32
             )
-            .ok();
-            */
+                .ok();
 
             volt_amps_disp(volt_f, amps_f, &mut buf);
             disp.set_intensity(0, 8).unwrap();
@@ -251,5 +257,4 @@ fn interpolate_f(_p: &mut impl uWrite, mut x: i16, calibr: &[(i16, f32)]) -> f32
     }
     0.0
 }
-
 // EOF

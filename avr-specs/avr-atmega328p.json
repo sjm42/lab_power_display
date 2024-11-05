@@ -8,7 +8,9 @@
   "executables": true,
   "late-link-args": {
     "gcc": [
-      "-lgcc"
+      "-lgcc",
+      "-L",
+      "/usr/lib/avr/lib/avr5"
     ]
   },
   "linker": "avr-gcc",
@@ -18,15 +20,19 @@
   "max-atomic-width": 8,
   "no-default-libraries": false,
   "pre-link-args": {
-    "gcc": [
+    "ld": [
       "-Os",
       "-mmcu=atmega328p",
       "-Wl,--as-needed",
-      "-L", "/usr/lib/avr/lib/avr5"
+      "-L",
+      "/usr/lib/avr/lib/avr5"
     ]
   },
   "post-link-args": {
-    "gcc": ["-L", "/usr/lib/avr/lib/avr5"]
+    "gcc": [
+      "-L",
+      "/usr/lib/avr/lib/avr5"
+    ]
   },
   "target-c-int-width": "16",
   "target-pointer-width": "16"
