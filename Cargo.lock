@@ -4,11 +4,11 @@ version = 4
 
 [[package]]
 name = "ads1x1x"
-version = "0.2.2"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6b44310e48193933db0cd788961f450a86f35fdad022e4373883fa8e4640488e"
+checksum = "4c907ad7732d7d83dafc84f0d9a0909072e86137de28aa97beeb421ef8b648c6"
 dependencies = [
- "embedded-hal 0.2.7",
+ "embedded-hal 1.0.0",
  "nb 1.1.0",
 ]
 
@@ -404,7 +404,7 @@ dependencies = [
 
 [[package]]
 name = "lab_power_display"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "ads1x1x",
  "arduino-hal",
@@ -429,11 +429,11 @@ checksum = "5e5032e24019045c762d3c0f28f5b6b8bbf38563a65908389bf7978758920897"
 
 [[package]]
 name = "max7219"
-version = "0.4.2"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "96ad36f14b96e5e196c3cf1028eba57c8cf4e6045b1d4b68951d23c422400d1c"
+checksum = "0f591fc7e31531ea92a65ca9d2a6a9d8c96cc8e59ffeb9a9644279f254bbcbc9"
 dependencies = [
- "embedded-hal 0.2.7",
+ "embedded-hal 1.0.0",
 ]
 
 [[package]]

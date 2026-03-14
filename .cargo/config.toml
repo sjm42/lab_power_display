@@ -1,8 +1,23 @@
 [build]
-target = "avr-specs/avr-atmega328p.json"
+target = "avr-none"
 
-[target.'cfg(target_arch = "avr")']
+[target.avr-none]
+linker = "avr-gcc"
 runner = "ravedude nano -cb 57600"
+rustflags = [
+  "-C",
+  "target-cpu=atmega328p",
+  "-C",
+  "link-arg=-mmcu=atmega328p",
+  "-C",
+  "link-arg=-B/usr/lib/avr/lib/avr5",
+  "-C",
+  "link-arg=-Wl,--as-needed",
+  "-C",
+  "link-arg=-L/usr/lib/avr/lib/avr5",
+  "-C",
+  "link-arg=-lgcc",
+]
 
 [unstable]
 build-std = ["core"]

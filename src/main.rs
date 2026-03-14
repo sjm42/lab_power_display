@@ -7,9 +7,10 @@
 #[allow(unused_imports)]
 use panic_halt;
 
-use ads1x1x::{channel, Ads1x1x, FullScaleRange, SlaveAddr};
-use arduino_hal::{hal::wdt, prelude::*, spi};
-use embedded_hal::spi as espi;
+use ads1x1x::{channel, Ads1x1x, FullScaleRange, TargetAddr};
+use arduino_hal::{hal::wdt, spi};
+use embedded_hal::digital;
+use embedded_hal::spi::{self as espi, SpiBus, SpiDevice};
 use max7219::*;
 use nb::block;
 use ufmt::uWrite;
@@ -21,6 +22,81 @@ const N_AVG: i32 = 16;
 // Our calibration data, based on real measurements
 
 const AMP_OFF: i16 = 70;
+
+#[derive(Debug)]
+enum ExclusiveSpiError<BusErr, CsErr> {
+    Bus(BusErr),
+    Cs(CsErr),
+}
+
+impl<BusErr, CsErr> espi::Error for ExclusiveSpiError<BusErr, CsErr>
+where
+    BusErr: espi::Error,
+    CsErr: core::fmt::Debug,
+{
+    fn kind(&self) -> espi::ErrorKind {
+        match self {
+            Self::Bus(err) => err.kind(),
+            Self::Cs(_) => espi::ErrorKind::ChipSelectFault,
+        }
+    }
+}
+
+struct ExclusiveSpiDevice<BUS, CS> {
+    bus: BUS,
+    cs: CS,
+}
+
+impl<BUS, CS> ExclusiveSpiDevice<BUS, CS> {
+    fn new(bus: BUS, cs: CS) -> Self {
+        Self { bus, cs }
+    }
+}
+
+impl<BUS, CS> espi::ErrorType for ExclusiveSpiDevice<BUS, CS>
+where
+    BUS: espi::ErrorType,
+    CS: digital::ErrorType,
+{
+    type Error = ExclusiveSpiError<BUS::Error, CS::Error>;
+}
+
+impl<BUS, CS> SpiDevice<u8> for ExclusiveSpiDevice<BUS, CS>
+where
+    BUS: SpiBus<u8>,
+    CS: digital::OutputPin,
+{
+    fn transaction(&mut self, operations: &mut [espi::Operation<'_, u8>]) -> Result<(), Self::Error> {
+        self.cs.set_low().map_err(ExclusiveSpiError::Cs)?;
+
+        let op_result = (|| {
+            for op in operations {
+                match op {
+                    espi::Operation::Read(buf) => self.bus.read(buf),
+                    espi::Operation::Write(buf) => self.bus.write(buf),
+                    espi::Operation::Transfer(read, write) => self.bus.transfer(read, write),
+                    espi::Operation::TransferInPlace(buf) => self.bus.transfer_in_place(buf),
+                    espi::Operation::DelayNs(ns) => {
+                        self.bus.flush().map_err(ExclusiveSpiError::Bus)?;
+                        arduino_hal::delay_ns(*ns);
+                        Ok(())
+                    }
+                }
+                .map_err(ExclusiveSpiError::Bus)?;
+            }
+
+            Ok(())
+        })();
+
+        let flush_result = self.bus.flush().map_err(ExclusiveSpiError::Bus);
+        let cs_result = self.cs.set_high().map_err(ExclusiveSpiError::Cs);
+
+        op_result?;
+        flush_result?;
+        cs_result?;
+        Ok(())
+    }
+}
 
 const CAL_V: [(i16, f32); 13] = [
     (0, 0.000),
@@ -58,7 +134,7 @@ const CAL_I: [(i16, f32); 9] = [
 fn main() -> ! {
     let dp = arduino_hal::Peripherals::take().unwrap();
     let pins = arduino_hal::pins!(dp);
-    let mut watchdog = wdt::Wdt::new(dp.WDT, &dp.CPU.mcusr);
+    let mut watchdog = wdt::Wdt::new(dp.WDT, &dp.CPU.mcusr());
     watchdog.start(wdt::Timeout::Ms2000).unwrap();
 
     // NOTE: calibration mode is triggered with jumper in d3+d4
@@ -84,7 +160,7 @@ fn main() -> ! {
         clock: spi::SerialClockRate::OscfOver2,
         mode: espi::MODE_0,
     };
-    let (spi, _) = arduino_hal::Spi::new(
+    let (spi_bus, _spi_cs) = arduino_hal::Spi::new(
         dp.SPI,
         pins.d13.into_output(),
         pins.d11.into_output(),
@@ -93,7 +169,8 @@ fn main() -> ! {
         spi_config,
     );
 
-    let mut disp = MAX7219::from_spi_cs(1, spi, pins.d9.into_output()).unwrap();
+    let spi = ExclusiveSpiDevice::new(spi_bus, pins.d9.into_output());
+    let mut disp = MAX7219::from_spi(1, spi).unwrap();
     disp.power_on().unwrap();
     disp.set_intensity(0, 1).unwrap();
     disp.clear_display(0).unwrap();
@@ -109,7 +186,7 @@ fn main() -> ! {
         pins.a5.into_pull_up_input(),
         50000,
     );
-    let adc_addr = SlaveAddr::default();
+    let adc_addr = TargetAddr::default();
     let mut adc = Ads1x1x::new_ads1115(i2c, adc_addr);
     adc.disable_comparator().unwrap();
 
@@ -126,7 +203,7 @@ fn main() -> ! {
         arduino_hal::delay_ms(5);
         let mut sum: i32 = 0;
         for _ in 0..N_AVG {
-            sum += block!(adc.read(&mut channel::DifferentialA0A1)).unwrap() as i32;
+            sum += block!(adc.read(channel::DifferentialA0A1)).unwrap() as i32;
             arduino_hal::delay_ms(1);
         }
         watchdog.feed();
@@ -155,7 +232,7 @@ fn main() -> ! {
         arduino_hal::delay_ms(5);
         sum = 0;
         for _ in 0..N_AVG {
-            sum += block!(adc.read(&mut channel::DifferentialA2A3)).unwrap() as i32;
+            sum += block!(adc.read(channel::DifferentialA2A3)).unwrap() as i32;
             arduino_hal::delay_ms(1);
         }
         watchdog.feed();

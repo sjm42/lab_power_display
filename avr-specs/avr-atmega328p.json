@@ -2,7 +2,7 @@
   "arch": "avr",
   "atomic-cas": false,
   "cpu": "atmega328p",
-  "data-layout": "e-P1-p:16:8-i8:8-i16:8-i32:8-i64:8-f32:8-f64:8-n8-a:8",
+  "data-layout": "e-P1-p:16:8-i8:8-i16:8-i32:8-i64:8-f32:8-f64:8-n8:16-a:8",
   "eh-frame-header": false,
   "exe-suffix": ".elf",
   "executables": true,
@@ -20,7 +20,7 @@
   "max-atomic-width": 8,
   "no-default-libraries": false,
   "pre-link-args": {
-    "ld": [
+    "gcc": [
       "-Os",
       "-mmcu=atmega328p",
       "-Wl,--as-needed",
@@ -30,10 +30,11 @@
   },
   "post-link-args": {
     "gcc": [
+      "-lgcc",
       "-L",
       "/usr/lib/avr/lib/avr5"
     ]
   },
-  "target-c-int-width": "16",
-  "target-pointer-width": "16"
+  "target-c-int-width": 16,
+  "target-pointer-width": 16
 }
