@@ -3,7 +3,7 @@ target = "avr-none"
 
 [target.avr-none]
 linker = "avr-gcc"
-runner = "ravedude nano -cb 57600"
+runner = "ravedude"
 rustflags = [
   "-C",
   "target-cpu=atmega328p",

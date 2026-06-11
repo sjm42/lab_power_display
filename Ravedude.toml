@@ -1,0 +1,5 @@
+[general]
+open-console = true
+serial-baudrate = 57600
+board = "nano"
+output-mode = "ascii"
